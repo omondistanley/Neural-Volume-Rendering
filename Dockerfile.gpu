@@ -1,0 +1,45 @@
+# Dockerfile.gpu
+# CUDA 11.0 base image with PyTorch + CUDA; adapt tag to match your CUDA version.
+# This Dockerfile installs conda (miniconda), creates the environment from environment.yml,
+# and sets the working directory to the repo root. Use this image for reproducible runs.
+
+FROM nvidia/cuda:11.0-cudnn8-runtime-ubuntu20.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install common deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget git ca-certificates bzip2 libglib2.0-0 libxext6 libsm6 libxrender1 unzip build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Miniconda
+ENV CONDA_DIR=/opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p $CONDA_DIR && \
+    rm /tmp/miniconda.sh
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+# Create working dir
+WORKDIR /workspace
+
+# Copy repo files (assumes building from repo root)
+COPY . /workspace
+
+# Create conda env from environment.yml
+RUN if [ -f environment.yml ]; then \
+      conda env create -f environment.yml -n l3d && \
+      /bin/bash -lc "source /opt/conda/etc/profile.d/conda.sh && conda activate l3d"; \
+    else \
+      conda create -y -n l3d python=3.9 && \
+      /bin/bash -lc "source /opt/conda/etc/profile.d/conda.sh && conda activate l3d && pip install torch torchvision"; \
+    fi
+
+# Ensure conda environment is activated for subsequent RUN/ENTRYPOINT
+SHELL ["/bin/bash", "-lc"]
+RUN echo "source /opt/conda/etc/profile.d/conda.sh && conda activate l3d" >> /root/.bashrc
+
+# Expose workspace mount point
+VOLUME ["/workspace"]
+WORKDIR /workspace/assignment3-main
+
+# Default command: print torch and GPU
+ENTRYPOINT ["/bin/bash", "-lc", "source /opt/conda/etc/profile.d/conda.sh && conda activate l3d && python -c \"import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())\" || true"]
