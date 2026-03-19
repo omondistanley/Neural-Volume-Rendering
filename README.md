@@ -234,11 +234,6 @@ Two key design decisions:
 <img src="images/NerfPreTrain.gif" width="380"/>
 </div>
 
-**After training — novel view synthesis of the Lego bulldozer:**
-
-<div align="center">
-<img src="images/part_3.gif" width="420"/>
-</div>
 
 **Fully trained NeRF — high-quality 360° spiral:**
 
