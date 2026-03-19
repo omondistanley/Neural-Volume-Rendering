@@ -10,3 +10,5 @@ miniconda.sh
 *.pyzwz
 *.pyzwzw
 *.pyzwzwzw
+gcp_startup.sh
+/docs
